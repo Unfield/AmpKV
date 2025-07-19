@@ -32,7 +32,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"github.com/your-org/ampkv/pkg/embedded" // Placeholder path
+	"github.com/Unfield/AmpKV/pkg/embedded"
 )
 
 func main() {
@@ -70,7 +70,7 @@ This is your standalone AmpKV server, acting as the centralized source of truth.
 
 1.  **Install the server:**
     ```bash
-    go install github.com/your-org/ampkv/cmd/ampkv-server@latest # Placeholder path
+    go install github.com/Unfield/AmpKV/cmd/ampkv-server@latest path
     ```
 2.  **Run the server:**
     By default, it might use SQLite, but you can configure it for PostgreSQL, MySQL, etc.
