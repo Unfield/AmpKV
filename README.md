@@ -23,7 +23,7 @@ To get AmpKV up and running, choose the mode that fits your needs!
 For a simple, local-only key-value store that lives within your application.
 
 ```bash
-go get github.com/your-org/ampkv/pkg/embedded
+go get github.com/Unfield/AmpKV/pkg/embedded
 ```
 
 ```go
