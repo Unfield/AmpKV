@@ -14,12 +14,25 @@ type AmpKV struct {
 	defaultCost int64
 }
 
-func NewAmpKV(cache storage.ICache, store storage.KVStore, defaultTTL time.Duration, defaultCost int64) *AmpKV {
+type AmpKVOptions struct {
+	DefaultTTL  time.Duration
+	DefaultCost int64
+}
+
+func NewAmpKV(cache storage.ICache, store storage.KVStore, options AmpKVOptions) *AmpKV {
+	if options.DefaultCost == 0 {
+		options.DefaultCost = 1
+	}
+
+	if options.DefaultTTL < 0 {
+		options.DefaultTTL = 0
+	}
+
 	return &AmpKV{
 		cache:       cache,
 		store:       store,
-		defaultTTL:  defaultTTL,
-		defaultCost: defaultCost,
+		defaultTTL:  options.DefaultTTL,
+		defaultCost: options.DefaultCost,
 	}
 }
 
