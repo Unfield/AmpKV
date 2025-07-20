@@ -77,7 +77,7 @@ func TestAmpKVOperations(t *testing.T) {
 	t.Run("SetWithTTL and Get before expiry", func(t *testing.T) {
 		key := "testkeywithttl"
 		value := []byte("testvaluewithttl")
-		ampkv.SetWithTTL(key, value, 1, 2)
+		ampkv.SetWithTTL(key, value, 1, 2*time.Second)
 
 		retrievedValue, foundVal := ampkv.Get(key)
 		if !foundVal {
@@ -91,7 +91,7 @@ func TestAmpKVOperations(t *testing.T) {
 	t.Run("SetWithTTL and Get after expiry", func(t *testing.T) {
 		key := "testkeywithttl_expired"
 		value := []byte("testvaluewithttl_expired")
-		ampkv.SetWithTTL(key, value, 1, 1)
+		ampkv.SetWithTTL(key, value, 1, 2*time.Second)
 
 		time.Sleep(1 * time.Second)
 
