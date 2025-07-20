@@ -25,17 +25,18 @@ func NewAmpKV(cache storage.ICache, store storage.KVStore, defaultTTL time.Durat
 
 func (ampkv *AmpKV) Get(key string) ([]byte, bool) {
 	val, cacheHit := ampkv.cache.Get(key)
-	if !cacheHit {
-		val, found := ampkv.store.Get(key)
-		if found {
-			if ampkv.defaultTTL > 0 {
-				ampkv.cache.SetWithTTL(key, val, ampkv.defaultCost, ampkv.defaultTTL)
-			} else {
-				ampkv.cache.Set(key, val, ampkv.defaultCost)
-			}
+	if cacheHit {
+		return val, true
+	}
+	val, found := ampkv.store.Get(key)
+	if found {
+		if ampkv.defaultTTL > 0 {
+			ampkv.cache.SetWithTTL(key, val, ampkv.defaultCost, ampkv.defaultTTL)
+		} else {
+			ampkv.cache.Set(key, val, ampkv.defaultCost)
 		}
 	}
-	return val, cacheHit
+	return val, found
 }
 
 func (ampkv *AmpKV) Set(key string, value []byte, cost int64) error {

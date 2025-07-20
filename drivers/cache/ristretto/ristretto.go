@@ -32,6 +32,7 @@ func (r *RistrettoCache) Get(key string) ([]byte, bool) {
 
 func (r *RistrettoCache) Set(key string, value []byte, cost int64) error {
 	result := r.cache.Set(key, value, cost)
+	r.cache.Wait()
 	if !result {
 		return fmt.Errorf("Failed to set key: %s", key)
 	}
@@ -40,6 +41,7 @@ func (r *RistrettoCache) Set(key string, value []byte, cost int64) error {
 
 func (r *RistrettoCache) SetWithTTL(key string, value []byte, cost int64, ttl time.Duration) error {
 	result := r.cache.SetWithTTL(key, value, cost, ttl)
+	r.cache.Wait()
 	if !result {
 		return fmt.Errorf("Failed to set key: %s", key)
 	}
@@ -51,9 +53,6 @@ func (r *RistrettoCache) Delete(key string) {
 }
 
 func (r *RistrettoCache) Close() error {
-	err := r.Close()
-	if err != nil {
-		return fmt.Errorf("Failed to close Ristretto: %w", err)
-	}
+	r.cache.Close()
 	return nil
 }
