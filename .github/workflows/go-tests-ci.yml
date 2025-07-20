@@ -1,4 +1,4 @@
-name: GO CI
+name: Tests
 
 on:
   push:
