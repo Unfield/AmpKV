@@ -1,5 +1,12 @@
 # ⚡ AmpKV: Your Flexible Go-Native Key-Value Store ⚡
 
+[![GO CI](https://github.com/Unfield/AmpKV/actions/workflows/go-ci.yml/badge.svg)](https://github.com/Unfield/AmpKV/actions/workflows/go-ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Unfield/AmpKV)](https://goreportcard.com/report/github.com/Unfield/AmpKV)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Contributors](https://img.shields.io/github/contributors/Unfield/AmpKV.svg)](https://github.com/Unfield/AmpKV/graphs/contributors)
+![GitHub stars](https://img.shields.io/github/stars/Unfield/AmpKV.svg?style=social&label=Stars)
+![GitHub forks](https://img.shields.io/github/forks/Unfield/AmpKV.svg?style=social&label=Fork)
+
 ![AmpKV Banner](https://raw.githubusercontent.com/Unfield/AmpKV/main/public/initial_logo.svg)
 
 AmpKV (pronounced "Amp-Key-Vee") is a supercharged, Go-native key-value store designed for **flexibility, performance, and seamless distribution**. Whether you need lightning-fast local access, smart client-side caching, or a robust central source of truth, AmpKV has a mode just for you!
