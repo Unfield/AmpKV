@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/dgraph-io/badger/v4 v4.8.0
 	github.com/dgraph-io/ristretto/v2 v2.2.0
+	github.com/matoous/go-nanoid/v2 v2.1.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
