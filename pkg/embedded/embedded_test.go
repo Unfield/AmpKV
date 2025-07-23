@@ -59,7 +59,7 @@ func TestAmpKVOperations(t *testing.T) {
 
 	t.Run("Set and Get", func(t *testing.T) {
 		key := "testkey"
-		value := []byte("testvalue")
+		value := "testvalue"
 		err := ampkv.Set(key, value, 1)
 		if err != nil {
 			t.Fatalf("Error setting key '%s'", key)
@@ -69,28 +69,40 @@ func TestAmpKVOperations(t *testing.T) {
 		if !foundVal {
 			t.Fatalf("Expected key '%s' to be found after Set, but it was not.", key)
 		}
-		if string(retrievedValue) != string(value) {
+
+		stringValue, err := retrievedValue.AsString()
+		if err != nil {
+			t.Errorf("Failed to retrieve value as string: %v", err)
+		}
+
+		if stringValue != string(value) {
 			t.Errorf("Retrieved value for '%s' was '%s', expected '%s'", key, retrievedValue, value)
 		}
 	})
 
 	t.Run("SetWithTTL and Get before expiry", func(t *testing.T) {
 		key := "testkeywithttl"
-		value := []byte("testvaluewithttl")
+		value := "testvaluewithttl"
 		ampkv.SetWithTTL(key, value, 1, 2*time.Second)
 
 		retrievedValue, foundVal := ampkv.Get(key)
 		if !foundVal {
 			t.Fatalf("Expected key '%s' to be found before TTL expiry, but it was not.", key)
 		}
-		if string(retrievedValue) != string(value) {
+
+		stringValue, err := retrievedValue.AsString()
+		if err != nil {
+			t.Errorf("Failed to retrieve value as string: %v", err)
+		}
+
+		if stringValue != string(value) {
 			t.Errorf("Retrieved value for '%s' was '%s', expected '%s'", key, retrievedValue, value)
 		}
 	})
 
 	t.Run("SetWithTTL and Get after expiry", func(t *testing.T) {
 		key := "testkeywithttl_expired"
-		value := []byte("testvaluewithttl_expired")
+		value := "testvaluewithttl_expired"
 		ampkv.SetWithTTL(key, value, 1, 2*time.Second)
 
 		time.Sleep(2*time.Second + 500*time.Millisecond)
@@ -103,7 +115,7 @@ func TestAmpKVOperations(t *testing.T) {
 
 	t.Run("Delete existing key", func(t *testing.T) {
 		key := "keyToDelete"
-		ampkv.Set(key, []byte("valueToDelete"), 1)
+		ampkv.Set(key, "valueToDelete", 1)
 
 		_, foundVal := ampkv.Get(key)
 		if !foundVal {
