@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package ampkv;
+
+option go_package = "github.com/Unfield/AmpKV/pkg/client/rpc";
+
+enum AmpKVDataTypeProto {
+    AMP_KV_DATA_TYPE_UNKNOWN = 0;
+    AMP_KV_DATA_TYPE_STRING = 1;
+    AMP_KV_DATA_TYPE_INT = 2;
+    AMP_KV_DATA_TYPE_FLOAT = 3;
+    AMP_KV_DATA_TYPE_BOOL = 4;
+    AMP_KV_DATA_TYPE_JSON = 5;
+    AMP_KV_DATA_TYPE_BINARY = 6;
+}
+
+message KeyValue {
+    string key = 1;
+    bytes value = 2;
+    AmpKVDataTypeProto type = 3
+    int64 cost = 4;
+}
+
+message GetRequest {
+    string key = 1;
+}
+
+message GetResponse {
+    KeyValue kv = 1;
+    bool found = 2;
+}
+
+message SetRequest {
+    KeyValue kv = 1;
+}
+
+message SetWithTTLRequest {
+    KeyValue kv = 1;
+    int64 ttl_seconds = 2;
+}
+
+message DeleteRequest {
+    string key = 1;
+}
+
+message OperationResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+service AmpKVService {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc Set(SetRequest) returns (OperationResponse);
+    rpc SetWithTTL(SetWithTTLRequest) returns (OperationResponse);
+    rpc Delete(DeleteRequest) returns (OperationResponse);
+}

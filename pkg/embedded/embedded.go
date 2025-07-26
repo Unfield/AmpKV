@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Unfield/AmpKV/internal/storage"
+	"github.com/Unfield/AmpKV/pkg/common"
 )
 
 type AmpKV struct {
@@ -36,44 +37,91 @@ func NewAmpKV(cache storage.ICache, store storage.KVStore, options AmpKVOptions)
 	}
 }
 
-func (ampkv *AmpKV) Get(key string) ([]byte, bool) {
-	val, cacheHit := ampkv.cache.Get(key)
+func (ampkv *AmpKV) Get(key string) (*common.AmpKVValue, bool) {
+	var rawVal []byte
+	var found bool
+
+	cacheVal, cacheHit := ampkv.cache.Get(key)
 	if cacheHit {
-		return val, true
-	}
-	val, found := ampkv.store.Get(key)
-	if found {
-		if ampkv.defaultTTL > 0 {
-			ampkv.cache.SetWithTTL(key, val, ampkv.defaultCost, ampkv.defaultTTL)
-		} else {
-			ampkv.cache.Set(key, val, ampkv.defaultCost)
+		rawVal = cacheVal
+		found = true
+	} else {
+		storeVal, storeFound := ampkv.store.Get(key)
+		if storeFound {
+			rawVal = storeVal
+			found = true
+			if ampkv.defaultTTL > 0 {
+				ampkv.cache.SetWithTTL(key, rawVal, ampkv.defaultCost, ampkv.defaultTTL)
+			} else {
+				ampkv.cache.Set(key, rawVal, ampkv.defaultCost)
+			}
 		}
 	}
-	return val, found
+
+	if found {
+		ampKVValue, err := common.AmpKVValueFrom(rawVal)
+		if err != nil {
+			fmt.Printf("Error decoding AmpKVValue for key '%s': %v\n", key, err)
+			return nil, false
+		}
+		return ampKVValue, true
+	}
+
+	return nil, false
 }
 
-func (ampkv *AmpKV) Set(key string, value []byte, cost int64) error {
-	err := ampkv.cache.Set(key, value, cost)
+func (ampkv *AmpKV) Set(key string, value any, cost int64) error {
+	ampKVData, err := common.NewAmpKVValue(value)
+	if err != nil {
+		return err
+	}
+	ampKVDataByteSlice, err := ampKVData.ToByteSlice()
+	if err != nil {
+		return err
+	}
+
+	err = ampkv.cache.Set(key, ampKVDataByteSlice, cost)
 	if err != nil {
 		return fmt.Errorf("Failed to set value to Cache: %w", err)
 	}
-	err = ampkv.store.Set(key, value, cost)
+	err = ampkv.store.Set(key, ampKVDataByteSlice, cost)
 	if err != nil {
 		return fmt.Errorf("Failed to set value to Store: %w", err)
 	}
 	return nil
 }
 
-func (ampkv *AmpKV) SetWithTTL(key string, value []byte, cost int64, ttl time.Duration) error {
-	err := ampkv.cache.SetWithTTL(key, value, cost, ttl)
+func (ampkv *AmpKV) SetWithTTL(key string, value any, cost int64, ttl time.Duration) error {
+	ampKVData, err := common.NewAmpKVValue(value)
 	if err != nil {
-		return fmt.Errorf("Failed to set value to Cache: %w", err)
+		return err
 	}
-	err = ampkv.store.SetWithTTL(key, value, cost, ttl)
+	ampKVDataByteSlice, err := ampKVData.ToByteSlice()
 	if err != nil {
-		return fmt.Errorf("Failed to set value to Store: %w", err)
+		return err
 	}
-	return nil
+
+	if ttl > 0 {
+		err = ampkv.cache.SetWithTTL(key, ampKVDataByteSlice, cost, ttl)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Cache: %w", err)
+		}
+		err = ampkv.store.SetWithTTL(key, ampKVDataByteSlice, cost, ttl)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Store: %w", err)
+		}
+		return nil
+	} else {
+		err = ampkv.cache.Set(key, ampKVDataByteSlice, cost)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Cache: %w", err)
+		}
+		err = ampkv.store.Set(key, ampKVDataByteSlice, cost)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Store: %w", err)
+		}
+		return nil
+	}
 }
 
 func (ampkv *AmpKV) Delete(key string) {
