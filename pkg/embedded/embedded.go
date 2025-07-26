@@ -101,15 +101,27 @@ func (ampkv *AmpKV) SetWithTTL(key string, value any, cost int64, ttl time.Durat
 		return err
 	}
 
-	err = ampkv.cache.SetWithTTL(key, ampKVDataByteSlice, cost, ttl)
-	if err != nil {
-		return fmt.Errorf("Failed to set value to Cache: %w", err)
+	if ttl > 0 {
+		err = ampkv.cache.SetWithTTL(key, ampKVDataByteSlice, cost, ttl)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Cache: %w", err)
+		}
+		err = ampkv.store.SetWithTTL(key, ampKVDataByteSlice, cost, ttl)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Store: %w", err)
+		}
+		return nil
+	} else {
+		err = ampkv.cache.Set(key, ampKVDataByteSlice, cost)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Cache: %w", err)
+		}
+		err = ampkv.store.Set(key, ampKVDataByteSlice, cost)
+		if err != nil {
+			return fmt.Errorf("Failed to set value to Store: %w", err)
+		}
+		return nil
 	}
-	err = ampkv.store.SetWithTTL(key, ampKVDataByteSlice, cost, ttl)
-	if err != nil {
-		return fmt.Errorf("Failed to set value to Store: %w", err)
-	}
-	return nil
 }
 
 func (ampkv *AmpKV) Delete(key string) {

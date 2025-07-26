@@ -18,7 +18,7 @@ const (
 	PermAdmin Permission = "admin"
 )
 
-type ApiKeyRecord struct {
+type ApiKey struct {
 	ID          string
 	Key         string
 	Name        string
@@ -28,7 +28,7 @@ type ApiKeyRecord struct {
 	Disabled    bool
 }
 
-func (apr *ApiKeyRecord) HasPermission(p Permission) bool {
+func (apr *ApiKey) HasPermission(p Permission) bool {
 	if slices.Contains(apr.Permissions, p) {
 		return true
 	}
@@ -40,7 +40,7 @@ func (apr *ApiKeyRecord) HasPermission(p Permission) bool {
 	return false
 }
 
-func (apr *ApiKeyRecord) IsValid() bool {
+func (apr *ApiKey) IsValid() bool {
 	if apr.Disabled {
 		return false
 	}
@@ -50,25 +50,25 @@ func (apr *ApiKeyRecord) IsValid() bool {
 	return true
 }
 
-func (apr *ApiKeyRecord) ToByteSlice() ([]byte, error) {
+func (apr *ApiKey) ToByteSlice() ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 
 	err := encoder.Encode(apr)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to encode ApiKeyRecord to byte slice: %w", err)
+		return nil, fmt.Errorf("Failed to encode ApiKey to byte slice: %w", err)
 	}
 
 	return buffer.Bytes(), nil
 }
 
-func ApiKeyRecordFromBuffer(buffer []byte) (*ApiKeyRecord, error) {
+func ApiKeyFromBuffer(buffer []byte) (*ApiKey, error) {
 	decoder := gob.NewDecoder(bytes.NewReader(buffer))
-	var decodedApiKeyRecord ApiKeyRecord
-	err := decoder.Decode(&decodedApiKeyRecord)
+	var decodedApiKey ApiKey
+	err := decoder.Decode(&decodedApiKey)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to decode ApiKeyRecord from buffer: %w", err)
+		return nil, fmt.Errorf("Failed to decode ApiKey from buffer: %w", err)
 	}
 
-	return &decodedApiKeyRecord, nil
+	return &decodedApiKey, nil
 }

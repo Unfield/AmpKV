@@ -34,11 +34,20 @@ func (s *AmpKVGrpcServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 		}, nil
 	}
 
+	valBytes, err := val.Bytes()
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "GetRequest: failed to convert value to bytes")
+	}
+
+	if valBytes == nil {
+		return nil, status.Errorf(codes.NotFound, "GetRequest: value not found")
+	}
+
 	return &pb.GetResponse{
 		Found: true,
 		Kv: &pb.KeyValue{
 			Key:   req.Key,
-			Value: val,
+			Value: valBytes,
 		},
 	}, nil
 }
