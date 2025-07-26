@@ -12,6 +12,7 @@ import (
 
 	"github.com/Unfield/AmpKV/drivers/cache/ristretto"
 	"github.com/Unfield/AmpKV/drivers/store/badger"
+	"github.com/Unfield/AmpKV/internal/auth"
 	"github.com/Unfield/AmpKV/internal/server"
 	pb "github.com/Unfield/AmpKV/pkg/client/rpc"
 	"github.com/Unfield/AmpKV/pkg/embedded"
@@ -60,7 +61,12 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	apiKeyManager, err := auth.NewApiKeyManager(ampkvEmbedded)
+	if err != nil {
+		log.Fatalf("Failed to initialize api key manager: %v", err)
+	}
+
+	s := grpc.NewServer(grpc.UnaryInterceptor(server.AuthUnaryServerInterceptor(*apiKeyManager)))
 	pb.RegisterAmpKVServiceServer(s, grpcServerImpl)
 
 	reflection.Register(s)
