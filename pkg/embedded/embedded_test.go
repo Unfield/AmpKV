@@ -34,9 +34,12 @@ func setupTestAmpKV(t *testing.T) *embedded.AmpKV {
 		t.Fatalf("Failed to initialize Store: %v", err)
 	}
 
-	ampkv := embedded.NewAmpKV(cache, store, embedded.AmpKVOptions{
+	ampkv, err := embedded.NewAmpKV(cache, store, embedded.AmpKVOptions{
 		DefaultTTL: 60 * time.Second,
 	})
+	if err != nil {
+		t.Fatalf("Failed to initialize Store: %v", err)
+	}
 
 	t.Cleanup(func() {
 		if err := ampkv.Close(); err != nil {

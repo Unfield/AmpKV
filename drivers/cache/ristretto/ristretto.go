@@ -56,3 +56,7 @@ func (r *RistrettoCache) Close() error {
 	r.cache.Close()
 	return nil
 }
+
+func (r *RistrettoCache) IsNil() bool {
+	return false
+}

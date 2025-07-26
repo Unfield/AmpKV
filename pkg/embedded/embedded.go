@@ -20,7 +20,7 @@ type AmpKVOptions struct {
 	DefaultCost int64
 }
 
-func NewAmpKV(cache storage.ICache, store storage.KVStore, options AmpKVOptions) *AmpKV {
+func NewAmpKV(cache storage.ICache, store storage.KVStore, options AmpKVOptions) (*AmpKV, error) {
 	if options.DefaultCost == 0 {
 		options.DefaultCost = 1
 	}
@@ -29,12 +29,16 @@ func NewAmpKV(cache storage.ICache, store storage.KVStore, options AmpKVOptions)
 		options.DefaultTTL = 0
 	}
 
+	if cache.IsNil() && store.IsNil() {
+		return nil, fmt.Errorf("cache and store can not be nil at the same time")
+	}
+
 	return &AmpKV{
 		cache:       cache,
 		store:       store,
 		defaultTTL:  options.DefaultTTL,
 		defaultCost: options.DefaultCost,
-	}
+	}, nil
 }
 
 func (ampkv *AmpKV) Get(key string) (*common.AmpKVValue, bool) {

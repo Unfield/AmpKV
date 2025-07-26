@@ -8,6 +8,7 @@ type ICache interface {
 	SetWithTTL(key string, value []byte, cost int64, ttl time.Duration) error
 	Delete(key string)
 	Close() error
+	IsNil() bool
 }
 
 type KVStore interface {
@@ -16,4 +17,5 @@ type KVStore interface {
 	SetWithTTL(key string, value []byte, cost int64, ttl time.Duration) error
 	Delete(key string)
 	Close() error
+	IsNil() bool
 }

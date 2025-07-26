@@ -83,3 +83,7 @@ func (s *BadgerStore) Close() error {
 	}
 	return nil
 }
+
+func (r *BadgerStore) IsNil() bool {
+	return false
+}

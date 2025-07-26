@@ -40,7 +40,10 @@ func main() {
 		log.Fatal("failed to initialize badger store")
 	}
 
-	ampkvEmbedded := embedded.NewAmpKV(ampkvCache, ampkvStore, embedded.AmpKVOptions{DefaultTTL: 10 * time.Minute})
+	ampkvEmbedded, err := embedded.NewAmpKV(ampkvCache, ampkvStore, embedded.AmpKVOptions{DefaultTTL: 10 * time.Minute})
+	if err != nil {
+		log.Fatal("failed to initialize AmpKV embedded")
+	}
 	defer func() {
 		err := ampkvEmbedded.Close()
 		if err != nil {
