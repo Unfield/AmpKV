@@ -26,6 +26,7 @@ func NewAmpKVHttpServer(store *embedded.AmpKV) *AmpKVHttpServer {
 
 	server.e.Use(middleware.Recover())
 	server.e.Use(middleware.Logger())
+	server.e.Use(HttpAuthMiddleware)
 
 	server.e.GET("/api/v1/:key", server.handleGet())
 	server.e.POST("/api/v1/", server.handleSet())
