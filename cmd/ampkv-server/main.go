@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -13,9 +12,11 @@ import (
 	"github.com/Unfield/AmpKV/drivers/cache/ristretto"
 	"github.com/Unfield/AmpKV/drivers/store/badger"
 	"github.com/Unfield/AmpKV/internal/auth"
+	"github.com/Unfield/AmpKV/internal/logger"
 	"github.com/Unfield/AmpKV/internal/server"
 	pb "github.com/Unfield/AmpKV/pkg/client/rpc"
 	"github.com/Unfield/AmpKV/pkg/embedded"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -28,30 +29,37 @@ func main() {
 	)
 	flag.Parse()
 
+	logger.InitLogger()
+	defer logger.GetLogger().Sync()
+
+	appLogger := logger.GetLogger()
+
+	appLogger.Info("Starting AmpKV...")
+
 	ampkvCache, err := ristretto.NewRistrettoCache(1e7, 1<<30, 64)
 	if err != nil {
-		log.Fatal("failed to initialize ristretto cache")
+		appLogger.Fatal("failed to initialize ristretto cache")
 	}
 
 	if dbPath == nil {
-		log.Fatal("db-path must not be empty")
+		appLogger.Fatal("db-path must not be empty")
 	}
 
 	ampkvStore, err := badger.NewBadgerStore(*dbPath)
 	if err != nil {
-		log.Fatal("failed to initialize badger store")
+		appLogger.Fatal("failed to initialize badger store")
 	}
 
 	ampkvEmbedded, err := embedded.NewAmpKV(ampkvCache, ampkvStore, embedded.AmpKVOptions{DefaultTTL: 10 * time.Minute})
 	if err != nil {
-		log.Fatal("failed to initialize AmpKV embedded")
+		appLogger.Fatal("failed to initialize AmpKV embedded")
 	}
 	defer func() {
 		err := ampkvEmbedded.Close()
 		if err != nil {
-			log.Printf("failed to close AmpKV embedded: %v", err)
+			appLogger.Error("failed to close AmpKV embedded", zap.Error(err))
 		} else {
-			log.Println("AmpKV embedded closed successfully")
+			appLogger.Info("AmpKV embedded closed successfully")
 		}
 	}()
 
@@ -59,27 +67,27 @@ func main() {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", *grpcPort))
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		appLogger.Fatal("Failed to listen", zap.Error(err))
 	}
 
 	apiKeyManager, err := auth.NewApiKeyManager(ampkvEmbedded)
 	if err != nil {
-		log.Fatalf("Failed to initialize api key manager: %v", err)
+		appLogger.Fatal("Failed to initialize api key manager", zap.Error(err))
 	}
 
-	s := grpc.NewServer(grpc.UnaryInterceptor(server.AuthUnaryServerInterceptor(*apiKeyManager)))
+	s := grpc.NewServer(grpc.UnaryInterceptor(server.AuthUnaryServerInterceptor(apiKeyManager)))
 	pb.RegisterAmpKVServiceServer(s, grpcServerImpl)
 
 	reflection.Register(s)
 
 	go func() {
-		log.Printf("gRPC server running on %s", lis.Addr())
+		appLogger.Info("gRPC server running", zap.String("address", lis.Addr().String()))
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("gRPC server failed to serve: %v", err)
+			appLogger.Fatal("gRPC server failed to server", zap.Error(err))
 		}
 	}()
 
-	httpServerImpl := server.NewAmpKVHttpServer(ampkvEmbedded)
+	httpServerImpl := server.NewAmpKVHttpServer(ampkvEmbedded, apiKeyManager)
 
 	if *httpMode == "https" {
 		httpServerImpl.ListenAutoTLS("0.0.0.0", 4443)
@@ -91,9 +99,8 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-sigChan
-	log.Printf("Recived signal %s, gracefully shutting down...", sig)
-
+	appLogger.Info("Shutting down", zap.String("signal", sig.String()))
 	s.GracefulStop()
-	log.Println("gRPC server gracefully stopped")
-	log.Println("AmpKV server exited")
+	appLogger.Info("gRPC server stopped")
+	appLogger.Info("AmpKV server exited")
 }

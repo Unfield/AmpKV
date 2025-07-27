@@ -18,7 +18,7 @@ const (
 	apiKeyMetadataKey = "api-key"
 )
 
-func AuthUnaryServerInterceptor(manager auth.ApiKeyManager) grpc.UnaryServerInterceptor {
+func AuthUnaryServerInterceptor(manager *auth.ApiKeyManager) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -53,32 +53,34 @@ func AuthUnaryServerInterceptor(manager auth.ApiKeyManager) grpc.UnaryServerInte
 	}
 }
 
-func HttpAuthMiddleware(next echo.HandlerFunc, manager auth.ApiKeyManager) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		authHeader := ctx.Request().Header.Get("authorization")
-		authHeaderParts := strings.Fields(authHeader)
-		if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer:" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "bearer token not found or malformed")
-		}
-
-		apiKeyRecord, err := manager.GetApiKey(authHeaderParts[1])
-		if err != nil {
-			if errors.Is(err, auth.ErrKeyExpired) || errors.Is(err, auth.ErrKeyDisabled) {
-				return echo.NewHTTPError(http.StatusUnauthorized, "apikey expired or disabled")
+func HttpAuthMiddleware(manager *auth.ApiKeyManager) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) (err error) {
+			authHeader := ctx.Request().Header.Get("authorization")
+			authHeaderParts := strings.Fields(authHeader)
+			if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer:" {
+				return echo.NewHTTPError(http.StatusUnauthorized, "bearer token not found or malformed")
 			}
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to verify apikey")
-		}
 
-		if apiKeyRecord == nil || !apiKeyRecord.IsValid() {
-			return echo.NewHTTPError(http.StatusUnauthorized, "apikey invalid or expired")
-		}
+			apiKeyRecord, err := manager.GetApiKey(authHeaderParts[1])
+			if err != nil {
+				if errors.Is(err, auth.ErrKeyExpired) || errors.Is(err, auth.ErrKeyDisabled) {
+					return echo.NewHTTPError(http.StatusUnauthorized, "apikey expired or disabled")
+				}
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to verify apikey")
+			}
 
-		requiredPerm := httpMethodToPermission(ctx.Request().Method)
-		if requiredPerm != "" && !apiKeyRecord.HasPermission(requiredPerm) {
-			return echo.NewHTTPError(http.StatusUnauthorized, "insufficent permissions for method: %s", ctx.Request().Method)
-		}
+			if apiKeyRecord == nil || !apiKeyRecord.IsValid() {
+				return echo.NewHTTPError(http.StatusUnauthorized, "apikey invalid or expired")
+			}
 
-		return next(ctx)
+			requiredPerm := httpMethodToPermission(ctx.Request().Method)
+			if requiredPerm != "" && !apiKeyRecord.HasPermission(requiredPerm) {
+				return echo.NewHTTPError(http.StatusUnauthorized, "insufficent permissions for method: %s", ctx.Request().Method)
+			}
+
+			return next(ctx)
+		}
 	}
 }
 

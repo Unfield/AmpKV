@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Unfield/AmpKV/internal/auth"
 	"github.com/Unfield/AmpKV/pkg/common"
 	"github.com/Unfield/AmpKV/pkg/embedded"
 	"github.com/labstack/echo/v4"
@@ -18,7 +19,7 @@ type AmpKVHttpServer struct {
 	store *embedded.AmpKV
 }
 
-func NewAmpKVHttpServer(store *embedded.AmpKV) *AmpKVHttpServer {
+func NewAmpKVHttpServer(store *embedded.AmpKV, manager *auth.ApiKeyManager) *AmpKVHttpServer {
 	server := &AmpKVHttpServer{
 		e:     echo.New(),
 		store: store,
@@ -26,7 +27,7 @@ func NewAmpKVHttpServer(store *embedded.AmpKV) *AmpKVHttpServer {
 
 	server.e.Use(middleware.Recover())
 	server.e.Use(middleware.Logger())
-	server.e.Use(HttpAuthMiddleware)
+	server.e.Use(HttpAuthMiddleware(manager))
 
 	server.e.GET("/api/v1/:key", server.handleGet())
 	server.e.POST("/api/v1/", server.handleSet())
