@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,9 +25,11 @@ import (
 
 func main() {
 	var (
-		grpcPort = flag.Int("grpc-port", 50051, "The gRPC server port")
-		dbPath   = flag.String("db-path", "ampkv_server.db", "Path to the AmpKV Embedded DB file")
-		httpMode = flag.String("http-mode", "http", "Http/Https mode for the Http Server")
+		grpcPort    = flag.Int("grpc-port", 50051, "The gRPC server port")
+		dbPath      = flag.String("db-path", "ampkv_server.db", "Path to the AmpKV Embedded DB file")
+		httpMode    = flag.String("http-mode", "http", "Http/Https mode for the Http Server")
+		httpAddress = flag.String("http-address", "0.0.0.0", "Address to bind the HTTP Server to")
+		httpPort    = flag.Int("http-port", 8080, "Port for the HTTP/HTTPS Server")
 	)
 	flag.Parse()
 
@@ -75,32 +79,50 @@ func main() {
 		appLogger.Fatal("Failed to initialize api key manager", zap.Error(err))
 	}
 
-	s := grpc.NewServer(grpc.UnaryInterceptor(server.AuthUnaryServerInterceptor(apiKeyManager)))
-	pb.RegisterAmpKVServiceServer(s, grpcServerImpl)
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(server.AuthUnaryServerInterceptor(apiKeyManager)))
+	pb.RegisterAmpKVServiceServer(grpcServer, grpcServerImpl)
 
-	reflection.Register(s)
+	reflection.Register(grpcServer)
 
 	go func() {
-		appLogger.Info("gRPC server running", zap.String("address", lis.Addr().String()))
-		if err := s.Serve(lis); err != nil {
-			appLogger.Fatal("gRPC server failed to server", zap.Error(err))
+		appLogger.Info("gRPC server running", zap.String("service", "grpc_server"), zap.String("address", lis.Addr().String()))
+		if err := grpcServer.Serve(lis); err != nil {
+			appLogger.Fatal("gRPC server failed to server", zap.String("service", "grpc_server"), zap.Error(err))
 		}
 	}()
 
-	httpServerImpl := server.NewAmpKVHttpServer(ampkvEmbedded, apiKeyManager)
+	httpServer := server.NewAmpKVHttpServer(ampkvEmbedded, apiKeyManager, appLogger)
 
-	if *httpMode == "https" {
-		httpServerImpl.ListenAutoTLS("0.0.0.0", 4443)
-	} else {
-		httpServerImpl.Listen("0.0.0.0", 8080)
-	}
+	go func() {
+		if *httpMode == "https" {
+			if err := httpServer.ListenAutoTLS(*httpAddress, uint16(*httpPort)); err != nil && err != http.ErrServerClosed {
+				appLogger.Fatal("HTTPS server failed to start or stopped unexpectedly", zap.Error(err))
+			}
+		} else {
+			if err := httpServer.Listen(*httpAddress, uint16(*httpPort)); err != nil && err != http.ErrServerClosed {
+				appLogger.Fatal("HTTP server failed to start or stopped unexpectedly", zap.Error(err))
+			}
+			appLogger.Info("HTTP server finished")
+		}
+	}()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-sigChan
 	appLogger.Info("Shutting down", zap.String("signal", sig.String()))
-	s.GracefulStop()
+
+	grpcServer.GracefulStop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		appLogger.Error("HTTP server forced to shutdown", zap.Error(err))
+	} else {
+		appLogger.Info("HTTP server stopped")
+	}
+
 	appLogger.Info("gRPC server stopped")
 	appLogger.Info("AmpKV server exited")
 }

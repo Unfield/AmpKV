@@ -12,7 +12,9 @@ type BadgerStore struct {
 }
 
 func NewBadgerStore(path string) (*BadgerStore, error) {
-	db, err := badger.Open(badger.DefaultOptions(path))
+	opts := badger.DefaultOptions(path)
+	opts.Logger = nil
+	db, err := badger.Open(opts)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open Badger: %w", err)
 	}
