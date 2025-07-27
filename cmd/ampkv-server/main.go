@@ -24,6 +24,7 @@ func main() {
 	var (
 		grpcPort = flag.Int("grpc-port", 50051, "The gRPC server port")
 		dbPath   = flag.String("db-path", "ampkv_server.db", "Path to the AmpKV Embedded DB file")
+		httpMode = flag.String("http-mode", "http", "Http/Https mode for the Http Server")
 	)
 	flag.Parse()
 
@@ -54,7 +55,7 @@ func main() {
 		}
 	}()
 
-	grpcServerImpl := server.NewAmpKVGrpcServer(*ampkvEmbedded)
+	grpcServerImpl := server.NewAmpKVGrpcServer(ampkvEmbedded)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", *grpcPort))
 	if err != nil {
@@ -77,6 +78,14 @@ func main() {
 			log.Fatalf("gRPC server failed to serve: %v", err)
 		}
 	}()
+
+	httpServerImpl := server.NewAmpKVHttpServer(ampkvEmbedded)
+
+	if *httpMode == "https" {
+		httpServerImpl.ListenAutoTLS("0.0.0.0", 4443)
+	} else {
+		httpServerImpl.Listen("0.0.0.0", 8080)
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

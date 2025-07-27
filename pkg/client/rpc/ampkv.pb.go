@@ -21,11 +21,73 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type AmpKVDataTypeProto int32
+
+const (
+	AmpKVDataTypeProto_AMP_KV_DATA_TYPE_UNKNOWN AmpKVDataTypeProto = 0
+	AmpKVDataTypeProto_AMP_KV_DATA_TYPE_STRING  AmpKVDataTypeProto = 1
+	AmpKVDataTypeProto_AMP_KV_DATA_TYPE_INT     AmpKVDataTypeProto = 2
+	AmpKVDataTypeProto_AMP_KV_DATA_TYPE_FLOAT   AmpKVDataTypeProto = 3
+	AmpKVDataTypeProto_AMP_KV_DATA_TYPE_BOOL    AmpKVDataTypeProto = 4
+	AmpKVDataTypeProto_AMP_KV_DATA_TYPE_JSON    AmpKVDataTypeProto = 5
+	AmpKVDataTypeProto_AMP_KV_DATA_TYPE_BINARY  AmpKVDataTypeProto = 6
+)
+
+// Enum value maps for AmpKVDataTypeProto.
+var (
+	AmpKVDataTypeProto_name = map[int32]string{
+		0: "AMP_KV_DATA_TYPE_UNKNOWN",
+		1: "AMP_KV_DATA_TYPE_STRING",
+		2: "AMP_KV_DATA_TYPE_INT",
+		3: "AMP_KV_DATA_TYPE_FLOAT",
+		4: "AMP_KV_DATA_TYPE_BOOL",
+		5: "AMP_KV_DATA_TYPE_JSON",
+		6: "AMP_KV_DATA_TYPE_BINARY",
+	}
+	AmpKVDataTypeProto_value = map[string]int32{
+		"AMP_KV_DATA_TYPE_UNKNOWN": 0,
+		"AMP_KV_DATA_TYPE_STRING":  1,
+		"AMP_KV_DATA_TYPE_INT":     2,
+		"AMP_KV_DATA_TYPE_FLOAT":   3,
+		"AMP_KV_DATA_TYPE_BOOL":    4,
+		"AMP_KV_DATA_TYPE_JSON":    5,
+		"AMP_KV_DATA_TYPE_BINARY":  6,
+	}
+)
+
+func (x AmpKVDataTypeProto) Enum() *AmpKVDataTypeProto {
+	p := new(AmpKVDataTypeProto)
+	*p = x
+	return p
+}
+
+func (x AmpKVDataTypeProto) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AmpKVDataTypeProto) Descriptor() protoreflect.EnumDescriptor {
+	return file_ampkv_proto_enumTypes[0].Descriptor()
+}
+
+func (AmpKVDataTypeProto) Type() protoreflect.EnumType {
+	return &file_ampkv_proto_enumTypes[0]
+}
+
+func (x AmpKVDataTypeProto) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AmpKVDataTypeProto.Descriptor instead.
+func (AmpKVDataTypeProto) EnumDescriptor() ([]byte, []int) {
+	return file_ampkv_proto_rawDescGZIP(), []int{0}
+}
+
 type KeyValue struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	Value         []byte                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	Cost          int64                  `protobuf:"varint,3,opt,name=cost,proto3" json:"cost,omitempty"`
+	Type          AmpKVDataTypeProto     `protobuf:"varint,3,opt,name=type,proto3,enum=ampkv.AmpKVDataTypeProto" json:"type,omitempty"`
+	Cost          int64                  `protobuf:"varint,4,opt,name=cost,proto3" json:"cost,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -72,6 +134,13 @@ func (x *KeyValue) GetValue() []byte {
 		return x.Value
 	}
 	return nil
+}
+
+func (x *KeyValue) GetType() AmpKVDataTypeProto {
+	if x != nil {
+		return x.Type
+	}
+	return AmpKVDataTypeProto_AMP_KV_DATA_TYPE_UNKNOWN
 }
 
 func (x *KeyValue) GetCost() int64 {
@@ -373,11 +442,12 @@ var File_ampkv_proto protoreflect.FileDescriptor
 
 const file_ampkv_proto_rawDesc = "" +
 	"\n" +
-	"\vampkv.proto\x12\x05ampkv\"F\n" +
+	"\vampkv.proto\x12\x05ampkv\"u\n" +
 	"\bKeyValue\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\fR\x05value\x12\x12\n" +
-	"\x04cost\x18\x03 \x01(\x03R\x04cost\"\x1e\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value\x12-\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x19.ampkv.AmpKVDataTypeProtoR\x04type\x12\x12\n" +
+	"\x04cost\x18\x04 \x01(\x03R\x04cost\"\x1e\n" +
 	"\n" +
 	"GetRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\"D\n" +
@@ -395,7 +465,15 @@ const file_ampkv_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\"G\n" +
 	"\x11OperationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xec\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage*\xd8\x01\n" +
+	"\x12AmpKVDataTypeProto\x12\x1c\n" +
+	"\x18AMP_KV_DATA_TYPE_UNKNOWN\x10\x00\x12\x1b\n" +
+	"\x17AMP_KV_DATA_TYPE_STRING\x10\x01\x12\x18\n" +
+	"\x14AMP_KV_DATA_TYPE_INT\x10\x02\x12\x1a\n" +
+	"\x16AMP_KV_DATA_TYPE_FLOAT\x10\x03\x12\x19\n" +
+	"\x15AMP_KV_DATA_TYPE_BOOL\x10\x04\x12\x19\n" +
+	"\x15AMP_KV_DATA_TYPE_JSON\x10\x05\x12\x1b\n" +
+	"\x17AMP_KV_DATA_TYPE_BINARY\x10\x062\xec\x01\n" +
 	"\fAmpKVService\x12,\n" +
 	"\x03Get\x12\x11.ampkv.GetRequest\x1a\x12.ampkv.GetResponse\x122\n" +
 	"\x03Set\x12\x11.ampkv.SetRequest\x1a\x18.ampkv.OperationResponse\x12@\n" +
@@ -415,33 +493,36 @@ func file_ampkv_proto_rawDescGZIP() []byte {
 	return file_ampkv_proto_rawDescData
 }
 
+var file_ampkv_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_ampkv_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_ampkv_proto_goTypes = []any{
-	(*KeyValue)(nil),          // 0: ampkv.KeyValue
-	(*GetRequest)(nil),        // 1: ampkv.GetRequest
-	(*GetResponse)(nil),       // 2: ampkv.GetResponse
-	(*SetRequest)(nil),        // 3: ampkv.SetRequest
-	(*SetWithTTLRequest)(nil), // 4: ampkv.SetWithTTLRequest
-	(*DeleteRequest)(nil),     // 5: ampkv.DeleteRequest
-	(*OperationResponse)(nil), // 6: ampkv.OperationResponse
+	(AmpKVDataTypeProto)(0),   // 0: ampkv.AmpKVDataTypeProto
+	(*KeyValue)(nil),          // 1: ampkv.KeyValue
+	(*GetRequest)(nil),        // 2: ampkv.GetRequest
+	(*GetResponse)(nil),       // 3: ampkv.GetResponse
+	(*SetRequest)(nil),        // 4: ampkv.SetRequest
+	(*SetWithTTLRequest)(nil), // 5: ampkv.SetWithTTLRequest
+	(*DeleteRequest)(nil),     // 6: ampkv.DeleteRequest
+	(*OperationResponse)(nil), // 7: ampkv.OperationResponse
 }
 var file_ampkv_proto_depIdxs = []int32{
-	0, // 0: ampkv.GetResponse.kv:type_name -> ampkv.KeyValue
-	0, // 1: ampkv.SetRequest.kv:type_name -> ampkv.KeyValue
-	0, // 2: ampkv.SetWithTTLRequest.kv:type_name -> ampkv.KeyValue
-	1, // 3: ampkv.AmpKVService.Get:input_type -> ampkv.GetRequest
-	3, // 4: ampkv.AmpKVService.Set:input_type -> ampkv.SetRequest
-	4, // 5: ampkv.AmpKVService.SetWithTTL:input_type -> ampkv.SetWithTTLRequest
-	5, // 6: ampkv.AmpKVService.Delete:input_type -> ampkv.DeleteRequest
-	2, // 7: ampkv.AmpKVService.Get:output_type -> ampkv.GetResponse
-	6, // 8: ampkv.AmpKVService.Set:output_type -> ampkv.OperationResponse
-	6, // 9: ampkv.AmpKVService.SetWithTTL:output_type -> ampkv.OperationResponse
-	6, // 10: ampkv.AmpKVService.Delete:output_type -> ampkv.OperationResponse
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 0: ampkv.KeyValue.type:type_name -> ampkv.AmpKVDataTypeProto
+	1, // 1: ampkv.GetResponse.kv:type_name -> ampkv.KeyValue
+	1, // 2: ampkv.SetRequest.kv:type_name -> ampkv.KeyValue
+	1, // 3: ampkv.SetWithTTLRequest.kv:type_name -> ampkv.KeyValue
+	2, // 4: ampkv.AmpKVService.Get:input_type -> ampkv.GetRequest
+	4, // 5: ampkv.AmpKVService.Set:input_type -> ampkv.SetRequest
+	5, // 6: ampkv.AmpKVService.SetWithTTL:input_type -> ampkv.SetWithTTLRequest
+	6, // 7: ampkv.AmpKVService.Delete:input_type -> ampkv.DeleteRequest
+	3, // 8: ampkv.AmpKVService.Get:output_type -> ampkv.GetResponse
+	7, // 9: ampkv.AmpKVService.Set:output_type -> ampkv.OperationResponse
+	7, // 10: ampkv.AmpKVService.SetWithTTL:output_type -> ampkv.OperationResponse
+	7, // 11: ampkv.AmpKVService.Delete:output_type -> ampkv.OperationResponse
+	8, // [8:12] is the sub-list for method output_type
+	4, // [4:8] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_ampkv_proto_init() }
@@ -454,13 +535,14 @@ func file_ampkv_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ampkv_proto_rawDesc), len(file_ampkv_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_ampkv_proto_goTypes,
 		DependencyIndexes: file_ampkv_proto_depIdxs,
+		EnumInfos:         file_ampkv_proto_enumTypes,
 		MessageInfos:      file_ampkv_proto_msgTypes,
 	}.Build()
 	File_ampkv_proto = out.File
