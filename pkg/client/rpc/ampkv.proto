@@ -17,7 +17,7 @@ enum AmpKVDataTypeProto {
 message KeyValue {
     string key = 1;
     bytes value = 2;
-    AmpKVDataTypeProto type = 3
+    AmpKVDataTypeProto type = 3;
     int64 cost = 4;
 }
 

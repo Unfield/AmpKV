@@ -12,10 +12,10 @@ import (
 
 type AmpKVGrpcServer struct {
 	pb.UnimplementedAmpKVServiceServer
-	store embedded.AmpKV
+	store *embedded.AmpKV
 }
 
-func NewAmpKVGrpcServer(store embedded.AmpKV) *AmpKVGrpcServer {
+func NewAmpKVGrpcServer(store *embedded.AmpKV) *AmpKVGrpcServer {
 	return &AmpKVGrpcServer{
 		store: store,
 	}
@@ -34,20 +34,12 @@ func (s *AmpKVGrpcServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 		}, nil
 	}
 
-	valBytes, err := val.Bytes()
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "GetRequest: failed to convert value to bytes")
-	}
-
-	if valBytes == nil {
-		return nil, status.Errorf(codes.NotFound, "GetRequest: value not found")
-	}
-
 	return &pb.GetResponse{
 		Found: true,
 		Kv: &pb.KeyValue{
+			Type:  pb.AmpKVDataTypeProto(val.Type),
 			Key:   req.Key,
-			Value: valBytes,
+			Value: val.Data,
 		},
 	}, nil
 }
